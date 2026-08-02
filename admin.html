@@ -1,39 +1,3 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>لوحة تحكم 15 Buns</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --charcoal:#1B1712; --charcoal-2:#241E18; --cream:#FBF5EA; --cream-2:#F3EADA;
-    --flame:#E8631A; --flame-dark:#C24E13; --ember:#A82A18; --gold:#F2A93B;
-    --ink:#211B15; --ink-soft:#5C5347; --line:rgba(33,27,21,.10);
-    --radius:16px; --shadow:0 10px 24px -12px rgba(27,23,18,.35);
-    --danger:#C0392B; --ok:#2E7D46;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:"Tajawal",sans-serif;background:var(--cream-2);color:var(--ink)}
-  input,select,textarea,button{font-family:inherit}
-  ::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:#d8cdb9;border-radius:8px}
-
-  /* ---------- Login ---------- */
-  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:
-    radial-gradient(circle at 30% 20%, #2a2119 0%, var(--charcoal) 60%);}
-  .login-card{background:var(--cream);border-radius:var(--radius);padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow)}
-  .login-card h1{font-size:22px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
-  .login-card p{color:var(--ink-soft);margin:0 0 22px;font-size:14px}
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink-soft)}
-  .field input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
-  .field input:focus{outline:none;border-color:var(--flame)}
-  .btn{cursor:pointer;border:none;border-radius:10px;padding:12px 18px;font-weight:700;font-size:15px;transition:.15s}
-  .btn-primary{background:var(--flame);color:#fff;width:100%}
-  .btn-primary:hover{background:var(--flame-dark)}
-  .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
-  .btn-danger{background:var(--danger);color:#fff}
   .btn-sm{padding:8px 12px;font-size:13px}
   .error-msg{background:#fbe4e1;color:var(--danger);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none}
 
@@ -733,24 +697,26 @@ async function saveSettings(){
 }
 
 async function importOriginalProducts(){
-  if(typeof window.SEED_PRODUCTS === 'undefined'){
-    toast('ملف seed-data.js غير موجود أو ما تحمّل');
-    return;
-  }
   if(!confirm('هيك رح يستبدل أي تعديلات حالية على نفس المنتجات بالنسخة الأصلية. متأكد؟')) return;
   try{
+    const res = await fetch('seed-data.js?t=' + Date.now(), {cache:'no-store'});
+    if(!res.ok){ toast('خطأ بتحميل seed-data.js — HTTP ' + res.status); return; }
+    const text = await res.text();
+    if(!text || text.length < 50){ toast('ملف seed-data.js فاضي أو ناقص'); return; }
+    const runner = new Function(text + '\nreturn { products: window.SEED_PRODUCTS, categories: window.SEED_CATEGORIES };');
+    const seed = runner();
+    if(!seed || !seed.products){ toast('محتوى seed-data.js غير صالح'); return; }
     await api('/api/admin/seed', {
       method:'POST',
-      body: JSON.stringify({ products: window.SEED_PRODUCTS, categories: window.SEED_CATEGORIES })
+      body: JSON.stringify({ products: seed.products, categories: seed.categories })
     });
     await loadAll();
     switchTab('products');
     toast('تم استيراد كل المنتجات والأقسام بنجاح ✅');
   }catch(e){
-    toast('حدث خطأ أثناء الاستيراد');
+    toast('خطأ: ' + e.message);
   }
 }
 </script>
-<script src="seed-data.js"></script>
 </body>
 </html>
