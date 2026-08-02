@@ -5,5 +5,11 @@
   "assets": {
     "directory": "./",
     "binding": "ASSETS"
-  }
+  },
+  "kv_namespaces": [
+    { "binding": "MENU_KV", "id": "dac5be0f1d5248ab83be5f515b835c0d" }
+  ],
+  "r2_buckets": [
+    { "binding": "MENU_IMAGES", "bucket_name": "menu-images" }
+  ]
 }
