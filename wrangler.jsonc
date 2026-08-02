@@ -1,0 +1,9 @@
+{
+  "name": "15buns-site",
+  "compatibility_date": "2026-08-01",
+  "main": "_worker.js",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS"
+  }
+}
